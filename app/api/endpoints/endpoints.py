@@ -3,8 +3,10 @@ from sqlalchemy.orm import Session
 from typing import List 
 from fastapi.params import Depends
 
-from app.api.DTO.dtos import ProveedorDTO,ProveedorDTOEnvio
+from app.api.DTO.dtos import ProveedorDTO,ProveedorDTOEnvio,LogisticaDTO,LogisticaDTOEnvio
 from app.api.models.tablas import Proveedor
+from app.api.models.tablas import Logistica
+
 
 from app.database.connection import SessionLocal, engine
 
@@ -58,6 +60,40 @@ def guardarProveedor(datosProveedor:ProveedorDTO,database:Session=Depends(conect
 def buscarProveedores(database:Session=Depends(conectarConBd)):
     try:
         proveedores=database.query(Proveedor).all()
+        return proveedores
+    except Exception as error:
+        database.rollback()
+        raise HTTPException(status_code=404, detail=f"tenemos un error {error}")
+    
+
+@rutas.post("/logisitca", response_model=LogisticaDTOEnvio, summary="Servicio para consultar todos los")   
+def guardarLogistica(datosLogistica:LogisticaDTO,database:Session=Depends(conectarConBd)):
+    try:
+        proveedorAGuardar=Logistica(
+            nombres=datosLogistica.nombres,
+            documento=datosLogistica.documento,
+            direccion=datosLogistica.direccion,
+            ciudad=datosLogistica.ciudad,
+            representante=datosLogistica.representante,
+            telefonoContacto=datosLogistica.telefonoContacto,
+            correo=datosLogistica.correo,
+            fechaEnvio=datosLogistica.fechaEnvio,
+            costoEnvio=datosLogistica.costoEnvio,
+            descripcion=datosLogistica.descripcion
+        )
+        database.add(proveedorAGuardar) 
+        database.commit()
+        database.refresh(proveedorAGuardar)
+        return proveedorAGuardar
+
+    except Exception as error:
+        database.rollback()
+        raise HTTPException(status_code=400, detail=f"tenemos un error {error}")
+    
+@rutas.get("/logisitca", response_model=List[LogisticaDTOEnvio], summary="Servicio para consultar todos los")
+def buscarLogistica(database:Session=Depends(conectarConBd)):
+    try:
+        proveedores=database.query(Logistica).all()
         return proveedores
     except Exception as error:
         database.rollback()
